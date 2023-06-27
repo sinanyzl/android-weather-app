@@ -30,12 +30,34 @@ class WeatherInfoShowModelImpl(private val context: Context): WeatherInfoShowMod
             val gson = GsonBuilder().create()
             val cityList: MutableList<City> = gson.fromJson(tContents, groupListType)
 
-            callback.onRequestSuccess(cityList) //let presenter know the city list
+            callback.onRequestSuccess(cityList)
 
         } catch (e: IOException) {
             e.printStackTrace()
-            callback.onRequestFailed(e.localizedMessage!!) //let presenter know about failure
+            callback.onRequestFailed(e.localizedMessage!!)
         }
+    }
+
+    override fun getWeatherInfo(cityId: Int, callback: RequestCompleteListener<WeatherInfoResponse>) {
+
+        val apiInterface: ApiInterface = RetrofitClient.client.create(ApiInterface::class.java)
+        val call: Call<WeatherInfoResponse> = apiInterface.callApiForWeatherInfo(cityId)
+
+        call.enqueue(object : Callback<WeatherInfoResponse> {
+
+
+            override fun onResponse(call: Call<WeatherInfoResponse>, response: Response<WeatherInfoResponse>) {
+                if (response.body() != null)
+                    callback.onRequestSuccess(response.body()!!)
+                else
+                    callback.onRequestFailed(response.message())
+            }
+
+
+            override fun onFailure(call: Call<WeatherInfoResponse>, t: Throwable) {
+                callback.onRequestFailed(t.localizedMessage!!)
+            }
+        })
     }
 
 }
